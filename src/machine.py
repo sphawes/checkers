@@ -57,7 +57,7 @@ class Machine:
 
         ports = glob.glob('/dev/cu.usb*')
         if sys.platform == "linux":
-            ports = glob.glob('/dev/tty.ACM*')
+            ports = glob.glob('/dev/ttyACM*')
         
         for port in ports:
             try:
