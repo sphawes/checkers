@@ -1,5 +1,5 @@
 
-import glob, serial, re
+import glob, serial, re, sys
 
 class Machine:
     def __init__(self):
@@ -54,7 +54,11 @@ class Machine:
 
     def findPort(self):
         # checks for valid serial ports and opens ser object to the first one found
+
         ports = glob.glob('/dev/cu.usb*')
+        if sys.platform == "linux":
+            ports = glob.glob('/dev/tty.ACM*')
+        
         for port in ports:
             try:
                 self.ser = serial.Serial(port, timeout=100)
