@@ -1,24 +1,29 @@
 from spot import Spot
 
+spot_offset = 27.5
+
+x_start = 144.5
+y_start = 371.5
+
 # column X positions
-a = 
-b = 
-c = 
-d = 
-e = 
-f = 
-g = 
-h = 
+a = x_start
+b = x_start + (spot_offset)
+c = x_start + (spot_offset * 2)
+d = x_start + (spot_offset * 3)
+e = x_start + (spot_offset * 4)
+f = x_start + (spot_offset * 5)
+g = x_start + (spot_offset * 6)
+h = x_start + (spot_offset * 7)
 
 # row Y positions
-one = 
-two = 
-three = 
-four = 
-five = 
-six = 
-seven = 
-eight = 
+one = y_start
+two = y_start - spot_offset
+three = y_start - (spot_offset * 2)
+four = y_start - (spot_offset * 3)
+five = y_start - (spot_offset * 4)
+six = y_start - (spot_offset * 5)
+seven = y_start - (spot_offset * 6)
+eight = y_start - (spot_offset * 7)
 
 spotLUT = [
     ["b1", b, one],["d1", d, one],["f1", f, one],["h1", h, one],
@@ -35,9 +40,8 @@ class Board:
     def __init__(self, machine):
         self.spots = []
         self.machine = machine
-
-        self.z_with_piece = 15
-        self.z_empty = 10
+        self.z = 7.5
+        
 
         for i in range(32):
             spot = Spot(id=spotLUT[i][0], x_coord=spotLUT[i][1], y_coord=spotLUT[i][2])

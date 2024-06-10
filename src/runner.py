@@ -6,19 +6,28 @@ class Runner:
         self.redGY = redGY
         self.blackGY = blackGY
 
-        self.blackInit = ["a1", "b1", "c1", "d1", "a2", "b2", "c2", "d2", "a3", "b3", "c3", "d3"]
-        self.redInit = ["a6", "b6", "c6", "d6", "a7", "b7", "c7", "d7", "a8", "b8", "c8", "d8"]
-        self.emptyInit = ["a4", "b4", "c4", "d4", "a5", "b5", "c5", "d5"]
+        self.blackInit = ["b1", "d1", "f1", "h1", "a2", "c2", "e2", "g2", "b3", "d3", "f3", "h3"]
+        self.emptyInit = ["a4", "c4", "e4", "g4", "b5", "d5", "f5", "h5"]
+        self.redInit = ["a6", "c6", "e6", "g6", "b7", "d7", "f7", "h7", "a8", "c8", "e8", "g8"]
+        
 
     def pick(self, id):
-        if not self.machine.hasPart:
+        if self.machine.loaded is None:
             for spot in self.board.spots:
                 if spot.id == id:
                     self.machine.goto(x=spot.x_coord, y=spot.y_coord)
-                    self.machine.goto(z=self.board.z_with_piece)
+                    self.machine.goto(z=self.board.z)
                     self.machine.pump(True)
                     #any delay needed
+                    self.machine.send("G4 P300")
                     self.machine.safeZ()
+                    self.machine.send("G4 P10")
+                    vac = self.machine.readLeftVac()
+                    if vac > -700000:
+                        print("low vac, retry")
+                        self.machine.goto(z=self.board.z + 0.2)
+                        self.machine.send("G4 P400")
+                        self.machine.safeZ()
 
                     self.machine.loaded = spot.loaded
                     spot.loaded = None
@@ -26,11 +35,12 @@ class Runner:
     def place(self, id):
         if self.machine.loaded is not None:
             for spot in self.board.spots:
-                if spot.id == id and spot.piece == None:
+                if spot.id == id and spot.loaded == None:
                     self.machine.goto(x=spot.x_coord, y=spot.y_coord)
-                    self.machine.goto(z=self.board.z_with_piece)
+                    self.machine.goto(z=self.board.z)
                     self.machine.pump(False)
                     #any delay needed
+                    self.machine.send("G4 P200")
                     self.machine.safeZ()
                     #assigning the spot the loaded part
                     spot.loaded = self.machine.loaded
@@ -50,9 +60,18 @@ class Runner:
             self.machine.goto(x=x, y=y)
             self.machine.goto(z=gy.z)
             self.machine.pump(False)
+            self.machine.send("G4 P200")
             self.machine.safeZ()
-            gy.increment()
+            gy.decrement()
             self.machine.loaded = None
+
+    def dance(self):
+        self.machine.park()
+        self.machine.goto(z=3)
+        self.machine.goto(z=60)
+        self.machine.goto(z=3)
+        self.machine.goto(z=60)
+        self.machine.safeZ()
 
     def draw(self, color):
 
@@ -68,8 +87,16 @@ class Runner:
             self.machine.goto(x=x, y=y)
             self.machine.goto(z=gy.z)
             self.machine.pump(True)
+            self.machine.send("G4 P350")
             self.machine.safeZ()
-            gy.decrement()
+            self.machine.send("G4 P10")
+            vac = self.machine.readLeftVac()
+            if vac > -700000:
+                print("low vac, retry")
+                self.machine.goto(z=gy.z + 0.2)
+                self.machine.send("G4 P400")
+                self.machine.safeZ()
+            gy.increment()
             self.machine.loaded = color
 
     def clearBoard(self):
@@ -108,3 +135,36 @@ class Runner:
                 self.pick(i)
                 self.discard()
             
+    def playGame(self):
+        # prep the board for a game
+        self.initGame()
+
+        moves = [
+            ["c6", "d5"],
+            ["b3", "a4"],
+            ["g6", "f5"],
+            ["c2", "b3"],
+            ["h7", "g6"],
+            ["d1", "c2"],
+            ["f5", "g4"],
+            ["h3", "f5"],
+            ["f5", "h7"]
+            
+        ]
+
+        for move in moves:
+            self.pick(move[0])
+            self.place(move[1])
+
+        self.pick("g4")
+        self.discard()
+        self.pick("g6")
+        self.discard()
+
+        self.dance()
+
+        self.clearBoard()
+
+
+    
+
