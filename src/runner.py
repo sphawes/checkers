@@ -6,6 +6,7 @@ class Runner:
         self.redGY = redGY
         self.blackGY = blackGY
         self.pickAttemptLimit = 3
+        self.vacThreshold = -700000;
 
         self.blackInit = ["b1", "d1", "f1", "h1", "a2", "c2", "e2", "g2", "b3", "d3", "f3", "h3"]
         self.emptyInit = ["a4", "c4", "e4", "g4", "b5", "d5", "f5", "h5"]
@@ -23,21 +24,12 @@ class Runner:
                     self.machine.send("G4 P300")
                     self.machine.safeZ()
 
-                    for i in range(self.pickAttemptLimit):
+                    self.machine.send("G4 P10")
+                    vac = self.machine.readLeftVac()
 
-                        # if we've mispicked a bunch just shut down until someone can un snafu
-                        if i == self.pickAttemptLimit:
-                            self.gracefulExit()
-                            
-                        self.machine.send("G4 P10")
-                        vac = self.machine.readLeftVac()
-                        if vac > -700000:
-                            print(f"Mispick #{i} detected, got {vac}, retrying.")
-                            self.machine.goto(z=self.board.z + (0.2 * i))
-                            self.machine.send("G4 P400")
-                            self.machine.safeZ()
-                        else:
-                            break
+                    if vac > self.vacThreshold:
+                        #if this fails, we exit the script, so we dont need to handle false condition
+                        self.carefulPick(self.board.z)
 
 
                     self.machine.loaded = spot.loaded
@@ -72,9 +64,36 @@ class Runner:
             self.machine.goto(z=gy.z)
             self.machine.pump(False)
             self.machine.send("G4 P200")
+            self.machine.send(f"G0 X{x-4}")
+            self.machine.send("G2 I5 J0")
             self.machine.safeZ()
             gy.decrement()
             self.machine.loaded = None
+
+    def carefulPick(self, targetZ):
+
+        for i in range(self.pickAttemptLimit):
+            # if we've mispicked a bunch just shut down until someone can un snafu
+            if i == self.pickAttemptLimit - 1:
+                self.gracefulExit()
+
+            # ok now we're gonna go really slow, and turn the pump on
+            self.machine.send("G0 F5000")
+            self.machine.pump(True)
+
+            self.machine.goto(z=targetZ + (0.2 * i))
+            self.machine.send("G4 P400")
+            self.machine.safeZ()
+
+            self.machine.send("G4 P10")
+            vac = self.machine.readLeftVac()
+            if vac > self.vacThreshold:
+                print(f"Mispick #{i} detected, got {vac}.")
+                
+            else:
+                self.machine.send("G0 F35000")
+                break
+
 
         # this function discards any parts, parks the head, ensures the pump is off, and quits the program
     def gracefulExit(self):
@@ -109,16 +128,13 @@ class Runner:
             self.machine.pump(True)
             self.machine.send("G4 P350")
             self.machine.safeZ()
-            for i in self.pickAttemptLimit:
-                self.machine.send("G4 P10")
-                vac = self.machine.readLeftVac()
-                if vac > -700000:
-                    print(f"Mispick #{i} detected, got {vac}, retrying.")
-                    self.machine.goto(z=gy.z + (0.2 * i))
-                    self.machine.send("G4 P400")
-                    self.machine.safeZ()
-                else:
-                    break
+
+            self.machine.send("G4 P10")
+            vac = self.machine.readLeftVac()
+
+            if vac > self.vacThreshold:
+                #if this fails, we exit the script, so we dont need to handle false condition
+                self.carefulPick(self.board.z)
             gy.increment()
             self.machine.loaded = color
 

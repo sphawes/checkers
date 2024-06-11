@@ -73,7 +73,7 @@ class Machine:
         encoded = command.encode('utf-8')
         self.ser.write(encoded + b'\n')
         resp = self.ser.readline().decode('ISO-8859-1')
-        print(str(resp))
+        #print(str(resp))
         return resp
 
     def park(self):
