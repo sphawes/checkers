@@ -40,9 +40,8 @@ class Board:
     def __init__(self, machine):
         self.spots = []
         self.machine = machine
-        self.z = 7
+        self.z = 6.5
         
-
         for i in range(32):
             spot = Spot(id=spotLUT[i][0], x_coord=spotLUT[i][1], y_coord=spotLUT[i][2])
             self.spots.append(spot)
@@ -50,4 +49,4 @@ class Board:
     def get(self, id):
         for spot in self.spots:
             if spot.id == id:
-                return spot
+                return spot.loaded

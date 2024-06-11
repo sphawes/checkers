@@ -145,6 +145,7 @@ class Runner:
                 self.discard()
 
     def initGame(self):
+        print("starting initgame")
         for i in self.blackInit:
             if self.board.get(i) == None:
                 #load with black
