@@ -8,8 +8,8 @@ from graveyard import Graveyard
 # make singletons
 machine = Machine()
 board = Board(machine)
-redGY = Graveyard(7.25, 91.5, 178, -1)
-blackGY = Graveyard(7.25, 390.5, 178, 1)
+redGY = Graveyard(7, 91.5, 178, -1)
+blackGY = Graveyard(7, 390.5, 178, 1)
 
 runner = Runner(machine, board, redGY, blackGY)
 

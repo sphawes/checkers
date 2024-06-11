@@ -40,7 +40,7 @@ class Board:
     def __init__(self, machine):
         self.spots = []
         self.machine = machine
-        self.z = 7.5
+        self.z = 7
         
 
         for i in range(32):
