@@ -17,17 +17,17 @@ machine.home()
 
 print("ambient: " + str(machine.readLeftVac()))
 
-init = board.get("a2")
-init.loaded = "BLACK"
-blackGY.count = 6
+# init = board.get("a2")
+# init.loaded = "BLACK"
+# blackGY.count = 6
 
-runner.pick("a2")
-runner.discard()
+# runner.pick("a2")
+# runner.discard()
 
-# try:
-#     while True:
-#         runner.playGame()
-# except KeyboardInterrupt:
-#     runner.gracefulExit()
+try:
+    while True:
+        runner.playGame()
+except KeyboardInterrupt:
+    runner.gracefulExit()
 
 
