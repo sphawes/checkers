@@ -1,10 +1,11 @@
-
+import sys
 class Runner:
     def __init__(self, machine, board, redGY, blackGY):
         self.machine = machine
         self.board = board
         self.redGY = redGY
         self.blackGY = blackGY
+        self.pickAttemptLimit = 3
 
         self.blackInit = ["b1", "d1", "f1", "h1", "a2", "c2", "e2", "g2", "b3", "d3", "f3", "h3"]
         self.emptyInit = ["a4", "c4", "e4", "g4", "b5", "d5", "f5", "h5"]
@@ -21,13 +22,23 @@ class Runner:
                     #any delay needed
                     self.machine.send("G4 P300")
                     self.machine.safeZ()
-                    self.machine.send("G4 P10")
-                    vac = self.machine.readLeftVac()
-                    if vac > -700000:
-                        print("low vac, retry")
-                        self.machine.goto(z=self.board.z + 0.2)
-                        self.machine.send("G4 P400")
-                        self.machine.safeZ()
+
+                    for i in range(self.pickAttemptLimit):
+
+                        # if we've mispicked a bunch just shut down until someone can un snafu
+                        if i == self.pickAttemptLimit:
+                            self.gracefulExit()
+                            
+                        self.machine.send("G4 P10")
+                        vac = self.machine.readLeftVac()
+                        if vac > -700000:
+                            print(f"Mispick #{i} detected, got {vac}, retrying.")
+                            self.machine.goto(z=self.board.z + (0.2 * i))
+                            self.machine.send("G4 P400")
+                            self.machine.safeZ()
+                        else:
+                            break
+
 
                     self.machine.loaded = spot.loaded
                     spot.loaded = None
@@ -65,6 +76,15 @@ class Runner:
             gy.decrement()
             self.machine.loaded = None
 
+        # this function discards any parts, parks the head, ensures the pump is off, and quits the program
+    def gracefulExit(self):
+        self.machine.safeZ()
+        self.discard()
+        self.machine.pump(False)
+        self.machine.park()
+        sys.exit()
+
+
     def dance(self):
         self.machine.park()
         self.machine.goto(z=3)
@@ -89,13 +109,16 @@ class Runner:
             self.machine.pump(True)
             self.machine.send("G4 P350")
             self.machine.safeZ()
-            self.machine.send("G4 P10")
-            vac = self.machine.readLeftVac()
-            if vac > -700000:
-                print("low vac, retry")
-                self.machine.goto(z=gy.z + 0.2)
-                self.machine.send("G4 P400")
-                self.machine.safeZ()
+            for i in self.pickAttemptLimit:
+                self.machine.send("G4 P10")
+                vac = self.machine.readLeftVac()
+                if vac > -700000:
+                    print(f"Mispick #{i} detected, got {vac}, retrying.")
+                    self.machine.goto(z=gy.z + (0.2 * i))
+                    self.machine.send("G4 P400")
+                    self.machine.safeZ()
+                else:
+                    break
             gy.increment()
             self.machine.loaded = color
 
