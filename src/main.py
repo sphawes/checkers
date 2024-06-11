@@ -21,6 +21,7 @@ try:
     while True:
         runner.playGame()
 except KeyboardInterrupt:
+    machine.safeZ()
     runner.discard()
     machine.pump(False)
     machine.park()
