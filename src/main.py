@@ -17,21 +17,12 @@ machine.home()
 
 print("ambient: " + str(machine.readLeftVac()))
 
-for i in runner.blackInit:
-    runner.draw("BLACK")
-    runner.place(i)
+try:
+    while True:
+        runner.playGame()
+except KeyboardInterrupt:
+    runner.discard()
+    machine.pump(False)
+    machine.park()
 
-for i in runner.redInit:
-    runner.draw("RED")
-    runner.place(i)
-
-runner.playGame()
-
-#runner.moveToEverySpot()
-
-machine.pump(False)
-machine.park()
-
-#runner.initGame()
-#runner.clearBoard()
 
