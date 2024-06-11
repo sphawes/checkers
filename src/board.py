@@ -50,4 +50,4 @@ class Board:
     def get(self, id):
         for spot in self.spots:
             if spot.id == id:
-                return spot.loaded
+                return spot
