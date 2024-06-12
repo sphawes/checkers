@@ -8,8 +8,8 @@ from graveyard import Graveyard
 # make singletons
 machine = Machine()
 board = Board(machine)
-redGY = Graveyard(7, 91.5, 178, -1)
-blackGY = Graveyard(7, 390.5, 178, 1)
+redGY = Graveyard(6.8, 91.5, 178, -1)
+blackGY = Graveyard(6.8, 390.5, 178, 1)
 
 runner = Runner(machine, board, redGY, blackGY)
 
@@ -17,14 +17,8 @@ machine.home()
 
 print("ambient: " + str(machine.readLeftVac()))
 
-# init = board.get("a2")
-# init.loaded = "BLACK"
-# blackGY.count = 6
-
-# runner.pick("a2")
-# runner.discard()
-
 try:
+    runner.probeBoard()
     while True:
         runner.playGame()
 except KeyboardInterrupt:

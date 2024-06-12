@@ -18,10 +18,18 @@ class Runner:
             for spot in self.board.spots:
                 if spot.id == id:
                     self.machine.goto(x=spot.x_coord, y=spot.y_coord)
-                    self.machine.goto(z=self.board.z)
+                    z = self.board.z
+                    if spot.z is not None:
+                        z = spot.z
+                    self.machine.goto(z=z)
                     self.machine.pump(True)
                     #any delay needed
                     self.machine.send("G4 P300")
+
+                    self.machine.send("G0 F2000")
+                    self.machine.goto(z=z+2)
+
+                    self.machine.send("G0 F35000")
                     self.machine.safeZ()
 
                     self.machine.send("G4 P10")
@@ -29,7 +37,7 @@ class Runner:
 
                     if vac > self.vacThreshold:
                         #if this fails, we exit the script, so we dont need to handle false condition
-                        self.carefulPick(self.board.z)
+                        self.carefulPick(z)
 
 
                     self.machine.loaded = spot.loaded
@@ -39,8 +47,11 @@ class Runner:
         if self.machine.loaded is not None:
             for spot in self.board.spots:
                 if spot.id == id and spot.loaded == None:
+                    z = self.board.z
+                    if spot.z is not None:
+                        z = spot.z
                     self.machine.goto(x=spot.x_coord, y=spot.y_coord)
-                    self.machine.goto(z=self.board.z)
+                    self.machine.goto(z=z)
                     self.machine.pump(False)
                     #any delay needed
                     self.machine.send("G4 P200")
@@ -70,6 +81,36 @@ class Runner:
             gy.decrement()
             self.machine.loaded = None
 
+    def probeBoard(self):
+        for spot in self.board.spots:
+            self.probeSpot(spot.id)
+
+    def probeSpot(self, id):
+        if self.machine.loaded is None:
+            for spot in self.board.spots:
+                if spot.id == id and spot.loaded == None:
+                    self.machine.safeZ()
+                    self.machine.goto(x=spot.x_coord, y=spot.y_coord)
+                    runningZ = self.board.z - 0.5
+                    self.machine.goto(z=runningZ)
+                    self.machine.pump(True)
+                    self.machine.send("G4 P200")
+                    for i in range(30):
+                        runningZ = runningZ - 0.1
+                        print(f'jogging to {runningZ}')
+                        self.machine.goto(z=runningZ)
+                        self.machine.send("G4 P10")
+                        vac = self.machine.readLeftVac()
+                        print(vac)
+                        if vac < -300000:
+                            print(f'Hit pick threshold with {vac}')
+                            #set spot z to chosen height plus three (thickness of piece)
+                            spot.z = runningZ + 3
+                            break
+                    self.machine.pump(False)
+                    self.machine.safeZ()
+
+
     def carefulPick(self, targetZ):
 
         for i in range(self.pickAttemptLimit):
@@ -78,11 +119,12 @@ class Runner:
                 self.gracefulExit()
 
             # ok now we're gonna go really slow, and turn the pump on
-            self.machine.send("G0 F5000")
+            self.machine.send("G0 F2000")
             self.machine.pump(True)
 
             self.machine.goto(z=targetZ + (0.2 * i))
             self.machine.send("G4 P400")
+            self.machine.goto(z=targetZ + 2)
             self.machine.safeZ()
 
             self.machine.send("G4 P10")
